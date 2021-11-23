@@ -1,5 +1,5 @@
 
-PRG            = counter
+PRG            = foto
 OBJ            = ${PRG}.o
 PROGRAMMER     = arduino
 PORT           = /dev/ttyUSB0
