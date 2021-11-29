@@ -7,12 +7,13 @@
 #define BAUD 9600                          // baudrate
 #define UBRR_VALUE ((F_CPU)/16/(BAUD)-1)   // zgodnie ze wzorem
 
-#define BUFFER_SIZE 32
+#define BUFFER_SIZE 32 
 
-static volatile char rx_buffer[32] = {0};
-static volatile char tx_buffer[32] = {0};
+static volatile char rx_buffer[BUFFER_SIZE] = {0};
+static volatile char tx_buffer[BUFFER_SIZE] = {0};
 static volatile uint8_t rx = 0, irq_rx = 0;
 static volatile uint8_t tx = 0, irq_tx = 0;
+static volatile uint8_t tx_size = 0, rx_size = 0;
 // inicjalizacja UART
 void uart_init()
 {
@@ -33,7 +34,10 @@ int uart_transmit(char data, FILE *stream)
   tx_buffer[tx] = data;
   if(++tx >= BUFFER_SIZE)
     tx = 0;
+  tx_size++;
+  tx_buffer[tx] = 0;
   UCSR0B |= _BV(UDRIE0);
+  while(tx_size == BUFFER_SIZE);
   return 0;
 }
 
@@ -41,10 +45,11 @@ int uart_transmit(char data, FILE *stream)
 int uart_receive(FILE *stream)
 {
   // czekaj aż znak dostępny
-  while (rx == irq_rx);
+  while (rx_size == 0);
   char c = rx_buffer[rx];
   if(++rx >= BUFFER_SIZE)
       rx = 0;
+  rx_size--;
   return c;
 }
 
@@ -54,21 +59,25 @@ ISR(USART_RX_vect)
     rx_buffer[irq_rx] = UDR0;
     if(++irq_rx >= BUFFER_SIZE)
         irq_rx = 0;
+    rx_size++;
 }
 
 ISR(USART_TX_vect)
 {
-    if(++irq_tx >= BUFFER_SIZE)
-        irq_tx = 0;
+    tx_size--;
 }
 
 ISR(USART_UDRE_vect)
 {
-  if(tx == irq_tx)
+  if(tx_size == 0 || tx_buffer[irq_tx] == '\0')
+  {
     UCSR0B &= ~_BV(UDRIE0);
+  }
   else
   {
     UDR0 = tx_buffer[irq_tx];
+    if(++irq_tx >= BUFFER_SIZE)
+        irq_tx = 0;
   }
 }
 
@@ -83,14 +92,15 @@ int main()
   stdin = stdout = stderr = &uart_file;
   sei();
   set_sleep_mode(SLEEP_MODE_IDLE);
-  printf("Quick brown fox jumps over the lazy dog.\r\n");
+  printf("Hello World!\r\n");
+  printf("The quick brown fox jumps over the lazy dog\r\n");
   while(1) {
-    sleep_mode();
-    //uint8_t a,b;
-    //printf("Give values for a and b: ");
-    //scanf("%" SCNu8 "%" SCNu8, &a, &b);
+    //sleep_mode();
+    printf("Write values for a and b\r\n");
+    uint8_t a,b;
+    scanf("%" SCNu8 " %" SCNu8, &a, &b);
 
-    //printf("+: %" PRIu8 "\r\n *: %" PRIu8 "/: %" PRIu8 "\r\n", a+b,a*b,a/b);
+    printf("+: %" PRIu8 "\r\n *: %" PRIu8 "\r\n/: %" PRIu8 "\r\n\r\n", a+b,a*b,a/b);
 
   }
 }

@@ -1,5 +1,5 @@
 
-PRG            = interrupt
+PRG            = led-driver
 OBJ            = ${PRG}.o
 PROGRAMMER     = arduino
 PORT           = /dev/ttyUSB0
