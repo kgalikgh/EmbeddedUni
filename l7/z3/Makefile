@@ -1,5 +1,5 @@
 
-PRG            = uart
+PRG            = clock
 OBJ            = ${PRG}.o
 PROGRAMMER     = arduino
 PORT           = /dev/ttyUSB0
@@ -7,7 +7,7 @@ MCU_TARGET     = atmega328p
 AVRDUDE_TARGET = atmega328p
 OPTIMIZE       = -O3
 DEFS           = -D__STDC_FORMAT_MACROS
-LIBS           = -u vfscanf -lscanf_flt -u vfprintf -lprintf_flt
+LIBS           = -u vfscanf -lscanf_flt -u vfprintf -lprintf_flt i2c.c
 BAUDRATE       = 115200
 
 HZ          = 16000000

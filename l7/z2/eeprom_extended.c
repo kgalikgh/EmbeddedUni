@@ -80,7 +80,7 @@ void writeOneByte(uint16_t addr, uint8_t val)
     i2cCheck(0x28, "I2C EEPROM write data");
     i2cStop();
     i2cCheck(0xf8, "I2C stop")
-    printf("Written %"PRIu8 " to addr: %"PRIu16"\r\n", val, addr);
+    printf("Written %x to addr: %x\r\n", val, addr);
 }
 
 void readLengthBytes(uint16_t addr, uint8_t length)
@@ -208,13 +208,13 @@ void parse(char *cmd)
        switch(argnum)
        {
            case 3:
-               addr = atoi(args[1]);
-               length = atoi(args[2]);
+               addr = strtol(args[1], NULL, 16);
+               length = strtol(args[2], NULL, 16);
                readLengthBytes(addr & 0xffff, length & 0xff);
                break;
 
            case 2:
-               addr = atoi(args[1]);
+               addr = strtol(args[1], NULL, 16);
                readOneByte(addr & 0xffff);
                break;
 
@@ -228,8 +228,8 @@ void parse(char *cmd)
        switch(argnum)
        {
            case 3:
-               addr = atoi(args[1]);
-               val = atoi(args[2]);
+               addr = strtol(args[1], NULL, 16);
+               val = strtol(args[2], NULL, 16);
                writeOneByte(addr & 0xffff, val & 0xff);
                break;
            case 1:

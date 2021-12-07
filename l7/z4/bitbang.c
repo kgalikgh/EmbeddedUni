@@ -1,9 +1,15 @@
 #include <avr/io.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <util/delay.h>
 
 #define BAUD 9600                          // baudrate
 #define UBRR_VALUE ((F_CPU)/16/(BAUD)-1)   // zgodnie ze wzorem
+
+#define SS PD4
+#define SCK PD7
+#define MOSI PD5
+#define MISO PD6
 
 // inicjalizacja UART
 void uart_init()
@@ -41,7 +47,7 @@ FILE uart_file;
 void spi_init()
 {
     // ustaw piny MOSI, SCK i ~SS jako wyjścia
-    DDRB |= _BV(DDB3) | _BV(DDB5) | _BV(DDB2);
+    DDRB |= _BV(DDB4);
     // włącz SPI w trybie master z zegarem 250 kHz
     SPCR = _BV(SPE) | _BV(SPR1);
 }
@@ -49,14 +55,31 @@ void spi_init()
 // transfer jednego bajtu
 uint8_t spi_transfer(uint8_t data)
 {
-    // rozpocznij transmisję
-    SPDR = data;
-    // czekaj na ukończenie transmisji
-    while (!(SPSR & _BV(SPIF)));
-    // wyczyść flagę przerwania
-    SPSR |= _BV(SPIF);
-    // zwróć otrzymane dane
-    return SPDR;
+    uint8_t byte_in = 0;
+    PORTD &= ~_BV(SS);
+    for(uint8_t bit = 0; bit < 8; bit++)
+    {
+      if(data & _BV(bit))
+      {
+        PORTD |= _BV(MOSI);
+      }
+      else
+      {
+        PORTD &= ~_BV(MOSI);
+      }
+      _delay_ms(0.01);
+      PORTD |= _BV(SCK);
+      
+      if(PIND & _BV(MISO))
+      {
+        byte_in |= _BV(bit);
+      }
+      
+      _delay_ms(0.01);
+      PORTD &= ~_BV(SCK);
+    }
+    PORTD |= _BV(SS);
+    return byte_in;
 }
 
 int main()
@@ -66,13 +89,17 @@ int main()
   // skonfiguruj strumienie wejścia/wyjścia
   fdev_setup_stream(&uart_file, uart_transmit, uart_receive, _FDEV_SETUP_RW);
   stdin = stdout = stderr = &uart_file;
+  DDRD |= _BV(SS) | _BV(MOSI) | _BV(SCK);
+  DDRD &= ~_BV(MISO);
+  PORTD |= _BV(MISO);
   // zainicjalizuj SPI
   spi_init();
   // program testujący połączenie
   uint8_t v = 0;
   while(1) {
+    _delay_ms(500);
     uint8_t w = spi_transfer(v);
-    printf("Wysłano: %"PRId8" Odczytano: %"PRId8"\r\n", v, w);
+    printf("Shifted out: %x Shifted in: %x\r\n", v, w);
     v++;
   }
 }

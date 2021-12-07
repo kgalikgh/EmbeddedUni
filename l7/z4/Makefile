@@ -1,5 +1,5 @@
 
-PRG            = uart
+PRG            = bitbang
 OBJ            = ${PRG}.o
 PROGRAMMER     = arduino
 PORT           = /dev/ttyUSB0
