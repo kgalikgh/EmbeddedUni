@@ -85,7 +85,7 @@ int main()
     ADCSRA |= _BV(ADIF); // wyczyść bit ADIF (pisząc 1!)
     v2 = ADC; // weź zmierzoną wartość (0..1023)
     if(v2 <= 805)
-      printf("ADC: %"PRIu16" Current: %lfuF\r\n",v2, current(v1,v2));
+      printf("ADC: %"PRIu16" Capacitance: %lfuF\r\n",v2, current(v1,v2));
   }
 }
 
